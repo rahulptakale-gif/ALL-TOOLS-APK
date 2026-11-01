@@ -1,5 +1,5 @@
 
-name: Build ALL TOOLS APK
+name: Build All Tools APK
 
 on:
   workflow_dispatch:
@@ -12,37 +12,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK 34
+      - name: Install Android SDK
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Extract project ZIP
-        run: unzip -q all-tools---ultimate-utility-app.zip -d project
+      - name: Install dependencies
+        run: |
+          cd all-tools---ultimate-utility-app
+          npm install
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.2'
+      - name: Build web app
+        run: |
+          cd all-tools---ultimate-utility-app
+          npm run build
 
-      - name: Build APK
-        run: gradle -p project/all-tools---ultimate-utility-app/android assembleDebug
+      - name: Copy web files
+        run: |
+          cp -r all-tools---ultimate-utility-app/dist/. all-tools---ultimate-utility-app/android/app/src/main/assets/www/
+
+      - name: Build Android APK
+        run: |
+          cd all-tools---ultimate-utility-app/android
+          gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ALL-TOOLS-APK
-          path: project/all-tools---ultimate-utility-app/android/app/build/outputs/apk/debug/app-debug.apk
-        
-      
+          path: all-tools---ultimate-utility-app/android/app/build/outputs/apk/debug/app-debug.apk
           
